@@ -1,0 +1,21 @@
+{
+    "name": "mathsgod/light-db-graphqligt-mappers",
+    "license": "MIT",
+    "description": "Light DB GraphQLite Mappers",
+    "authors": [
+        {
+            "name": "Raymond Chong",
+            "email": "mathsgod@yahoo.com"
+        }
+    ],
+    "require": {
+        "thecodingmachine/graphqlite": "^8.0"
+    },"autoload": {
+        "psr-4": {
+            "Light\\Db\\GraphQLite\\Mappers\\": "src/"
+        }
+    },
+    "require-dev": {
+        "mathsgod/light-db": "dev-main"
+    }
+}
