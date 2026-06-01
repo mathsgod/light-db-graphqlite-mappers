@@ -70,7 +70,7 @@ class TypeMapper implements TypeMapperInterface
 
     private function getMetaObjectType()
     {
-        if (!$this->cache["DB_META"]) {
+        if (!isset($this->cache["DB_META"])) {
             $this->cache["DB_META"] = new ObjectType([
 
                 'name' => 'DB_META',
