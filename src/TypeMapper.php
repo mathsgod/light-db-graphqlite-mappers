@@ -141,11 +141,11 @@ class TypeMapper implements TypeMapperInterface
                                     throw MissingParameterException::missingLimit();
                                 }
                                 if (isset($args['limit']) && $args['limit'] !== null) {
-                                    $root->limit($args['limit']);
+                                    $root = $root->limit($args['limit']);
                                 }
 
                                 if (isset($args['offset']) && $args['offset'] !== null) {
-                                    $root->offset($args["offset"]);
+                                    $root = $root->offset($args["offset"]);
                                 }
 
                                 return $root;
@@ -168,7 +168,7 @@ class TypeMapper implements TypeMapperInterface
                                     "name" => (new ReflectionClass($root->getClassName()))->getShortName(),
                                     "class" => $root->getClassName(),
                                     "total" => $root->count(),
-                                    "key" => $key
+                                    "key" => is_array($key) ? implode(",", $key) : $key
                                 ];
                             },
                         ],
@@ -211,9 +211,9 @@ class TypeMapper implements TypeMapperInterface
             return $this->getMetaObjectType();
         }
 
-        $subTypeName = substr($typeName, 17);
+        $subTypeName = substr($typeName, strlen('DB_QUERY_'));
 
-        $subType = $this->context->getRecursiveTypeMapper()->recursiveTypeMapper->mapNameToType($subTypeName);
+        $subType = $this->context->getRecursiveTypeMapper()->mapNameToType($subTypeName);
 
         if (!$subType instanceof OutputType) {
             throw CannotMapTypeException::mustBeOutputType($subTypeName);
