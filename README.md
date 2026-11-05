@@ -5,7 +5,7 @@ A [GraphQLite](https://graphqlite.thecodingmachine.io/) type mapper that exposes
 ## Installation
 
 ```bash
-composer require mathsgod/light-db-graphqlite-mappers
+composer require mathsgod/light-db-graphqlite-mappers:^2.0
 ```
 
 ## What it does
@@ -70,10 +70,21 @@ The generated GraphQL type will be `DB_QUERY_User` with `data` and `meta` fields
 
 ## Requirements
 
-- PHP 8.1+
+- PHP 8.3+
 - `thecodingmachine/graphqlite` ^8.0
-- `mathsgod/light-db`
+- `mathsgod/light-db` ^2.0
 
 ## License
 
 MIT
+
+## Version 2
+
+Requires PHP 8.3+, light-db 2.x (light-entity based) and GraphQLite 8.x.
+Composer installs the published light-db 2.x package. No sibling checkout,
+local path repository or development stability flag is required.
+
+Pagination retains the returned immutable Query, so multiple aliases can request
+independent pages. `meta.total` counts matches before pagination. For composite
+keys, `meta.key` contains comma-separated key names. GraphQL field shapes remain
+unchanged. Offset requires an explicit limit; negative limits/offsets are rejected.

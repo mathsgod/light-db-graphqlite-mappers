@@ -9,13 +9,15 @@
         }
     ],
     "require": {
-        "thecodingmachine/graphqlite": "^8.0"
-    },"autoload": {
+        "thecodingmachine/graphqlite": "^8.0",
+        "php": ">=8.3",
+        "mathsgod/light-db": "^2.0"
+    },
+    "autoload": {
         "psr-4": {
             "Light\\Db\\GraphQLite\\Mappers\\": "src/"
         }
     },
-    "require-dev": {
-        "mathsgod/light-db": "dev-main"
-    }
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
