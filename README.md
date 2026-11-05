@@ -1,60 +1,60 @@
 # light-db-graphqlite-mappers
 
-A [GraphQLite](https://graphqlite.thecodingmachine.io/) type mapper that exposes `Light\Db\Query` objects as paginated GraphQL types with metadata.
+A GraphQLite type mapper that exposes light-db 2 Query results as paginated
+GraphQL lists with metadata. Requires PHP 8.3+, GraphQLite 8.x and light-db 2.x,
+backed by light-entity 1.x.
+
+For upgrades from the Laminas-based integration, see the
+[v2 migration guide](docs/migration-v2.md). The previous implementation is
+preserved on the `1.x` maintenance branch.
 
 ## Installation
 
-```bash
+Once the mapper's stable 2.0 release is published:
+
+```sh
 composer require mathsgod/light-db-graphqlite-mappers:^2.0
 ```
 
-## What it does
+The mapper requires the published `mathsgod/light-db:^2.0` package. No local
+path repository or sibling checkout is needed for a stable installation.
 
-When a GraphQL field returns a `Light\Db\Query` instance, this mapper automatically wraps it into a structured type with two fields:
+## Register the mapper
 
-| Field  | Type        | Description                                      |
-|--------|-------------|--------------------------------------------------|
-| `data` | `[T!]!`     | The list of records, supports `limit` / `offset` |
-| `meta` | `DB_META!`  | Metadata about the query result                  |
-
-### `DB_META` fields
-
-| Field   | Type     | Description                    |
-|---------|----------|--------------------------------|
-| `total` | `Int`    | Total number of matching records |
-| `class` | `String` | Fully qualified class name     |
-| `key`   | `String` | Primary key field name         |
-| `name`  | `String` | Short class name               |
-
-## Usage
-
-Register the type mapper with your GraphQLite `SchemaFactory`:
+Add the factory to your configured GraphQLite SchemaFactory before creating the
+schema. The factory receives GraphQLite's FactoryContext automatically:
 
 ```php
-use Light\Db\GraphQLite\Mappers\TypeMapper;
+use Light\Db\GraphQLite\Mappers\TypeMapperFactory;
 
-$schemaFactory->addTypeMapper(new TypeMapper($factoryContext));
+$schemaFactory->addTypeMapperFactory(new TypeMapperFactory());
 ```
 
-Then return a `Light\Db\Query` from any GraphQL query method and type-hint the sub-type:
+Then expose a Query and describe its Model subtype in the PHPDoc. The Model must
+already be registered as a GraphQL output type in your application:
 
 ```php
-use TheCodingMachine\GraphQLite\Annotations\Query;
+use App\Model\User;
 use Light\Db\Query;
+use TheCodingMachine\GraphQLite\Annotations\Query as GraphQLQuery;
 
-#[Query]
-public function users(): Query /* <User> */
+/** @return User[] */
+#[GraphQLQuery]
+public function users(): Query
 {
-    return User::query();
+    return User::Query()->sort('id:asc');
 }
 ```
 
-The generated GraphQL type will be `DB_QUERY_User` with `data` and `meta` fields.
+An inline comment such as `Query /* <User> */` is not a replacement for the
+PHPDoc subtype. The mapper needs the subtype to build the list's output type.
 
-### Example GraphQL query
+## GraphQL output
+
+For a GraphQL subtype named `User`, the generated wrapper is `DB_QUERY_User`:
 
 ```graphql
-{
+query {
     users {
         data(limit: 10, offset: 0) {
             id
@@ -63,10 +63,31 @@ The generated GraphQL type will be `DB_QUERY_User` with `data` and `meta` fields
         meta {
             total
             key
+            name
+            class
         }
     }
 }
 ```
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `data` | `[T!]!` | Model results, with optional `limit` and `offset` arguments |
+| `meta` | `DB_META!` | Query metadata |
+| `meta.total` | `Int` | Filtered count before pagination |
+| `meta.key` | `String` | Single key name, or comma-separated composite-key names |
+| `meta.name` | `String` | Short PHP Model class name |
+| `meta.class` | `String` | Fully qualified PHP Model class name |
+
+Pagination retains the returned immutable Query. Multiple aliases can request
+independent pages without mutating their shared root Query. Offset requires an
+explicit limit, and negative limits/offsets are rejected. Omitting both arguments
+uses the pagination already present on the root Query; an unbounded root has no
+implicit page-size cap.
+
+This package maps Query output. It does not implement authentication,
+authorization, Model input types or database schema management. Configure access
+controls and root Query filters in the application.
 
 ## Requirements
 
@@ -74,17 +95,30 @@ The generated GraphQL type will be `DB_QUERY_User` with `data` and `meta` fields
 - `thecodingmachine/graphqlite` ^8.0
 - `mathsgod/light-db` ^2.0
 
+## Pagination errors
+
+Negative `limit` or `offset` values return a client-safe GraphQL field error with
+`extensions.code: "INVALID_PAGINATION"` and the invalid argument in the message.
+An offset without a limit also returns a readable error. These messages remain
+available with production error formatting; debug flags are not required.
+
+## Tests and CI
+
+```sh
+composer install
+composer test
+```
+
+The tests require `pdo_sqlite` and use a fresh in-memory database for each case.
+They exercise real GraphQL execution, pagination aliases, filtered totals, empty
+results, composite keys, missing subtypes, name-based type discovery and
+production-formatted pagination errors. Missing SQLite support fails the suite;
+tests are not silently skipped.
+
+GitHub Actions runs PHP 8.3, 8.4 and 8.5 against GraphQLite **8.0.0** and the
+latest compatible **8.x** release. The minimum-version jobs pin GraphQLite itself,
+while allowing compatible dependency updates.
+
 ## License
 
 MIT
-
-## Version 2
-
-Requires PHP 8.3+, light-db 2.x (light-entity based) and GraphQLite 8.x.
-Composer installs the published light-db 2.x package. No sibling checkout,
-local path repository or development stability flag is required.
-
-Pagination retains the returned immutable Query, so multiple aliases can request
-independent pages. `meta.total` counts matches before pagination. For composite
-keys, `meta.key` contains comma-separated key names. GraphQL field shapes remain
-unchanged. Offset requires an explicit limit; negative limits/offsets are rejected.

@@ -10,7 +10,6 @@ use GraphQL\Type\Definition\OutputType;
 use GraphQL\Type\Definition\Type;
 use \Light\Db\Query;
 use ReflectionClass;
-use RuntimeException;
 use TheCodingMachine\GraphQLite\FactoryContext;
 use TheCodingMachine\GraphQLite\Mappers\CannotMapTypeException;
 use TheCodingMachine\GraphQLite\Mappers\TypeMapperInterface;
@@ -19,7 +18,6 @@ use TheCodingMachine\GraphQLite\Types\MutableInterfaceType;
 use TheCodingMachine\GraphQLite\Types\MutableObjectType;
 use TheCodingMachine\GraphQLite\Types\ResolvableMutableInputInterface;
 
-use function get_class;
 use function is_a;
 use function strpos;
 use function substr;
@@ -107,12 +105,7 @@ class TypeMapper implements TypeMapperInterface
      */
     private function getObjectType(OutputType $subType): MutableInterface
     {
-        /** @var mixed $name - invalid vendor mapping */
-        $name = $subType->toString();
-
-        if ($name === null) {
-            throw new RuntimeException('Cannot get name property from sub type ' . get_class($subType));
-        }
+        $name = Type::getNamedType($subType)->name;
 
         $typeName = 'DB_QUERY_' . $name;
 
@@ -137,6 +130,11 @@ class TypeMapper implements TypeMapperInterface
                                 'offset' => Type::int(),
                             ],
                             'resolve' => static function (Query $root, $args) {
+                                foreach (['limit', 'offset'] as $argument) {
+                                    if (isset($args[$argument]) && $args[$argument] < 0) {
+                                        throw InvalidPaginationException::negative($argument);
+                                    }
+                                }
                                 if (!isset($args['limit']) && isset($args['offset'])) {
                                     throw MissingParameterException::missingLimit();
                                 }

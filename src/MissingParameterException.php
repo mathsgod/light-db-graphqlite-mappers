@@ -13,7 +13,7 @@ class MissingParameterException extends Exception implements ClientAware, Cannot
 
     public static function missingLimit(): self
     {
-        return new self('In the items field of a result set, you cannot add a "offset" without also adding a "limit"');
+        return new self('The "offset" argument on "data" requires an explicit "limit".');
     }
 
     public static function noSubType(): self
