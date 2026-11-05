@@ -11,24 +11,13 @@
     "require": {
         "thecodingmachine/graphqlite": "^8.0",
         "php": ">=8.3",
-        "mathsgod/light-db": "^2.0@dev"
+        "mathsgod/light-db": "^2.0"
     },
     "autoload": {
         "psr-4": {
             "Light\\Db\\GraphQLite\\Mappers\\": "src/"
         }
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../light-db-new",
-            "options": {
-                "versions": {
-                    "mathsgod/light-db": "2.0.x-dev"
-                }
-            }
-        }
-    ],
     "minimum-stability": "stable",
     "prefer-stable": true
 }
